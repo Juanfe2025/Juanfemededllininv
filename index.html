@@ -16,7 +16,7 @@
   <style>
     :root {
       --primary-color: #78d700;
-      --primary-hover: #407e06;
+      --primary-hover: #407e06; /* Ajustado para un hover más oscuro */
     }
     body {
       font-family: 'Inter', sans-serif;
@@ -274,6 +274,30 @@
             placeholder="Opcional"
           />
         </div>
+        <!-- NUEVO CAMPO: Carta de Responsabilidad (Radio Buttons) -->
+        <div class="md:col-span-2">
+          <label class="block text-gray-700 font-medium mb-1">Cuenta con Carta de Responsabilidad</label>
+          <div class="flex items-center space-x-4">
+            <input
+              type="radio"
+              id="cartaResponsabilidadSi"
+              name="cartaResponsabilidad"
+              value="true"
+              class="h-5 w-5 text-primary focus:ring-primary border-gray-300"
+            />
+            <label for="cartaResponsabilidadSi" class="text-gray-700">Sí</label>
+
+            <input
+              type="radio"
+              id="cartaResponsabilidadNo"
+              name="cartaResponsabilidad"
+              value="false"
+              checked
+              class="h-5 w-5 text-primary focus:ring-primary border-gray-300"
+            />
+            <label for="cartaResponsabilidadNo" class="text-gray-700">No</label>
+          </div>
+        </div>
         <div class="flex items-end">
           <button
             type="submit"
@@ -340,6 +364,18 @@
             </small>
           </div>
         </div>
+
+        <!-- NUEVOS BOTONES DE DESPLAZAMIENTO HORIZONTAL (como en tu ejemplo) -->
+        <div class="flex justify-end gap-2 mb-2">
+          <button id="scrollLeftBtn" class="bg-primary text-white p-2 rounded-full shadow-lg hover:bg-green-600 transition-all duration-200 opacity-75 hover:opacity-100" title="Desplazar a la izquierda">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button id="scrollRightBtn" class="bg-primary text-white p-2 rounded-full shadow-lg hover:bg-green-600 transition-all duration-200 opacity-75 hover:opacity-100" title="Desplazar a la derecha">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        <!-- FIN NUEVOS BOTONES DE DESPLAZAMIENTO HORIZONTAL -->
+
       </div>
       <div class="overflow-x-auto">
         <table class="min-w-full border border-gray-300 rounded-lg overflow-hidden">
@@ -366,6 +402,7 @@
         <!-- Nuevos encabezados de tabla -->
         <th class="px-4 py-2 text-left">Disco Duro</th>
         <th class="px-4 py-2 text-left">Contraseña</th>
+        <th class="px-4 py-2 text-left">Carta Responsabilidad</th> <!-- NUEVO ENCABEZADO -->
         <th class="px-4 py-2 text-center">Acciones</th>
       </tr>
     </thead>
@@ -546,30 +583,59 @@
   const form = document.getElementById('assetForm');
   const tbody = document.getElementById('inventoryTableBody');
   const fechaBajaInput = document.getElementById('fechaBaja');
-  const fechaAsignacionInput = document.getElementById('fechaAsignacion'); // Añadido
+  const fechaAsignacionInput = document.getElementById('fechaAsignacion'); 
   const estadoSelect = document.getElementById('estado');
   const btnExportExcel = document.getElementById('btnExportExcel');
   const searchInput = document.getElementById('searchInput');
+  // NUEVAS REFERENCIAS A LOS RADIO BUTTONS
+  const cartaResponsabilidadSiInput = document.getElementById('cartaResponsabilidadSi');
+  const cartaResponsabilidadNoInput = document.getElementById('cartaResponsabilidadNo');
+
+  // REFERENCIAS PARA LOS BOTONES DE DESPLAZAMIENTO (se obtienen aquí, ya que el script está al final del body)
+  const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+  const scrollRightBtn = document.getElementById('scrollRightBtn');
+  const tableContainer = document.querySelector('.overflow-x-auto'); 
+
+  // --- Lógica para los botones de desplazamiento horizontal ---
+  if (scrollLeftBtn && tableContainer) { 
+    scrollLeftBtn.addEventListener('click', () => {
+      tableContainer.scrollBy({
+        left: -200, 
+        behavior: 'smooth'
+      });
+    });
+  }
+
+  if (scrollRightBtn && tableContainer) { 
+    scrollRightBtn.addEventListener('click', () => {
+      tableContainer.scrollBy({
+        left: 200, 
+        behavior: 'smooth'
+      });
+    });
+  }
+  // --- FIN Lógica para los botones de desplazamiento horizontal ---
+
 
   // Habilitar o deshabilitar fecha de baja y fecha de asignación según estado
   estadoSelect.addEventListener('change', () => {
     if (estadoSelect.value === 'Inactivo') {
       fechaBajaInput.disabled = false;
       fechaBajaInput.required = true;
-      fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado
+      fechaAsignacionInput.disabled = false; 
       fechaAsignacionInput.required = true;
-    } else if (estadoSelect.value === 'Sin Asignar') { // Nueva condición para "Sin Asignar"
+    } else if (estadoSelect.value === 'Sin Asignar') { 
       fechaBajaInput.disabled = true;
       fechaBajaInput.required = false;
-      fechaBajaInput.value = ''; // Limpiar el valor
+      fechaBajaInput.value = ''; 
       fechaAsignacionInput.disabled = true;
       fechaAsignacionInput.required = false;
-      fechaAsignacionInput.value = ''; // Limpiar el valor
-    } else { // Para "Activo" o cualquier otro estado
+      fechaAsignacionInput.value = ''; 
+    } else { 
       fechaBajaInput.disabled = true;
       fechaBajaInput.required = false;
       fechaBajaInput.value = '';
-      fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado
+      fechaAsignacionInput.disabled = false;
       fechaAsignacionInput.required = true;
     }
   });
@@ -604,7 +670,10 @@
         (item.ram && item.ram.toLowerCase().includes(terminoLower)) ||
         (item.licenciaOffice && item.licenciaOffice.toLowerCase().includes(terminoLower)) ||
         (item.discoDuro && item.discoDuro.toLowerCase().includes(terminoLower)) ||
-        (item.contrasena && item.contrasena.toLowerCase().includes(terminoLower))
+        (item.contrasena && item.contrasena.toLowerCase().includes(terminoLower)) ||
+        // Nuevo campo de búsqueda para radio buttons
+        (item.cartaResponsabilidad !== undefined && 
+         ((item.cartaResponsabilidad && 'sí'.includes(terminoLower)) || (!item.cartaResponsabilidad && 'no'.includes(terminoLower))))
       );
     }
     renderTable();
@@ -637,6 +706,7 @@
         <td class="px-4 py-2">${item.licenciaOffice || '-'}</td>
         <td class="px-4 py-2">${item.discoDuro || '-'}</td>
         <td class="px-4 py-2">${item.contrasena || '-'}</td>
+        <td class="px-4 py-2">${item.cartaResponsabilidad ? 'Sí' : 'No'}</td> <!-- NUEVO CAMPO EN TABLA -->
         <td class="px-4 py-2 text-center space-x-2">
           <button data-id="${item.id}" class="btnEdit text-primary" title="Editar">
             <i class="fas fa-edit"></i>
@@ -689,6 +759,12 @@
       form.licenciaOffice.value = data.licenciaOffice || '';
       form.discoDuro.value = data.discoDuro || '';
       form.contrasena.value = data.contrasena || '';
+      // Cargar valor de los radio buttons
+      if (data.cartaResponsabilidad === true) {
+        cartaResponsabilidadSiInput.checked = true;
+      } else {
+        cartaResponsabilidadNoInput.checked = true;
+      }
 
       // Lógica para habilitar/deshabilitar campos de fecha al cargar para editar
       if (data.estado === 'Inactivo') {
@@ -755,8 +831,9 @@
     form.reset();
     fechaBajaInput.disabled = true;
     fechaBajaInput.required = false;
-    fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado por defecto
-    fechaAsignacionInput.required = true; // Asegurarse de que sea requerido por defecto
+    fechaAsignacionInput.disabled = false; 
+    fechaAsignacionInput.required = true; 
+    cartaResponsabilidadNoInput.checked = true; // Marcar "No" por defecto al limpiar
     form.removeAttribute('data-edit-id');
     form.querySelector('button[type="submit"]').textContent = 'Guardar Activo';
   }
@@ -774,11 +851,8 @@
     const estadoFisico = form.estadoFisico.value;
     const estado = form.estado.value;
     
-    // Solo obtener fechaAsignacion si no está deshabilitado
     const fechaAsignacion = fechaAsignacionInput.disabled ? '' : form.fechaAsignacion.value;
-    // Solo obtener fechaBaja si no está deshabilitado
     const fechaBaja = fechaBajaInput.disabled ? '' : form.fechaBaja.value;
-
 
     const proveedor = form.proveedor.value.trim();
     const marca = form.marca.value.trim();
@@ -788,6 +862,8 @@
     const licenciaOffice = form.licenciaOffice.value;
     const discoDuro = form.discoDuro.value.trim();
     const contrasena = form.contrasena.value.trim();
+    // Obtener valor del radio button seleccionado
+    const cartaResponsabilidad = cartaResponsabilidadSiInput.checked; // Será true si 'Sí' está marcado, false si 'No' está marcado
 
 
     // Validar campos obligatorios, ajustando para "Sin Asignar"
@@ -795,12 +871,10 @@
       alert('Por favor, complete todos los campos obligatorios: Nombre de Usuario, Tipo de Activo, Código, Área de Impacto, Ciudad, Estado Físico, Estado.');
       return;
     }
-    // Validar fechaAsignacion solo si no está deshabilitada
     if (!fechaAsignacionInput.disabled && !fechaAsignacion) {
         alert('Por favor, ingrese la Fecha de Asignación.');
         return;
     }
-    // Validar fechaBaja solo si no está deshabilitada
     if (!fechaBajaInput.disabled && !fechaBaja) {
         alert('Por favor, ingrese la Fecha de Baja.');
         return;
@@ -825,16 +899,15 @@
       ram,
       licenciaOffice,
       discoDuro,
-      contrasena
+      contrasena,
+      cartaResponsabilidad // Incluir el nuevo campo
     };
 
     const editId = form.getAttribute('data-edit-id');
     try {
       if (editId) {
-        // Actualizar activo existente
         const docRef = doc(db, "inventario", editId);
 
-        // Comprobar código duplicado diferente solo si se modificó código
         if (codigoChanged(editId, codigo)) {
           const existeCodigo = await existeCodigoDuplicado(codigo, editId);
           if (existeCodigo) {
@@ -844,7 +917,6 @@
         }
         await updateDoc(docRef, nuevoActivo);
       } else {
-        // Verificar que no exista código duplicado
         const existeCodigo = await existeCodigoDuplicado(codigo, null);
         if (existeCodigo) {
           alert('El código ya existe en el inventario.');
@@ -884,8 +956,8 @@
     }
 
     const ws_data = [
-      ['#', 'nombreUsuario', 'cargo', 'tipo', 'codigo', 'area', 'ciudad', 'estadoFisico', 'estado', 'fecha asignacion', 'fecha de baja', 'proveedor', 'marca', 'modelo', 'procesador', 'ram', 'licenciaOffice', 'discoDuro', 'contrasena'],
-      ['1', 'Juan', 'Coordinador TI', 'Laptop', 'DELL001', 'TID', 'CARTAGENA', 'OPTIMO', 'Activo', '2023-01-15', '', 'Dell', 'Dell', 'Latitude 5420', 'Intel Core i5', '8', 'Si', '256GB SSD', ''],
+      ['#', 'nombreUsuario', 'cargo', 'tipo', 'codigo', 'area', 'ciudad', 'estadoFisico', 'estado', 'fecha asignacion', 'fecha de baja', 'proveedor', 'marca', 'modelo', 'procesador', 'ram', 'licenciaOffice', 'discoDuro', 'contrasena', 'cartaResponsabilidad'], // NUEVO ENCABEZADO
+      ['1', 'Juan', 'Coordinador TI', 'Laptop', 'DELL001', 'TID', 'CARTAGENA', 'OPTIMO', 'Activo', '2023-01-15', '', 'Dell', 'Dell', 'Latitude 5420', 'Intel Core i5', '8', 'Si', '256GB SSD', '', 'Sí'], // Ejemplo de fila
       ...inventario.map((item, index) => [
         (index + 1).toString(),
         item.nombreUsuario || '',
@@ -905,7 +977,8 @@
         item.ram || '',
         item.licenciaOffice || '',
         item.discoDuro || '',
-        item.contrasena || ''
+        item.contrasena || '',
+        item.cartaResponsabilidad ? 'Sí' : 'No' // Exportar como 'Sí' o 'No'
       ]),
     ];
 
@@ -932,7 +1005,7 @@
       }
 
       const headers = jsonData[0].map(h => h.toString().toLowerCase().trim());
-      const requiredHeaders = ['#', 'nombreusuario', 'cargo', 'tipo', 'codigo', 'area', 'ciudad', 'estadofisico', 'estado', 'fecha asignacion', 'fecha de baja', 'proveedor', 'marca', 'modelo', 'procesador', 'ram', 'licenciaoffice', 'discoduro', 'contrasena'];
+      const requiredHeaders = ['#', 'nombreusuario', 'cargo', 'tipo', 'codigo', 'area', 'ciudad', 'estadofisico', 'estado', 'fecha asignacion', 'fecha de baja', 'proveedor', 'marca', 'modelo', 'procesador', 'ram', 'licenciaoffice', 'discoduro', 'contrasena', 'carta responsabilidad']; // NUEVO ENCABEZADO REQUERIDO
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
       if (missingHeaders.length > 0) {
@@ -962,13 +1035,14 @@
           ram: row[headers.indexOf('ram')] || '',
           licenciaOffice: row[headers.indexOf('licenciaoffice')] || '',
           discoDuro: row[headers.indexOf('discoduro')] || '',
-          contrasena: row[headers.indexOf('contrasena')] || ''
+          contrasena: row[headers.indexOf('contrasena')] || '',
+          // Mapear valor del radio button desde Excel
+          cartaResponsabilidad: (row[headers.indexOf('carta responsabilidad')] || '').toLowerCase() === 'sí' || (row[headers.indexOf('carta responsabilidad')] || '').toLowerCase() === 'si'
         };
 
         if (!item.nombreUsuario || !item.tipo || !item.codigo || !item.area || !item.ciudad || !item.estadoFisico || !item.estado) {
           throw new Error(`Fila ${i + 1}: Faltan datos requeridos (nombreUsuario, tipo, codigo, area, ciudad, estadoFisico, estado).`);
         }
-        // Validar fechas solo si el estado no es "Sin Asignar"
         if (item.estado !== 'Sin Asignar') {
             if (!item.fechaAsignacion) {
                 throw new Error(`Fila ${i + 1}: Fecha de Asignación es requerida para el estado "${item.estado}".`);
@@ -979,7 +1053,7 @@
         }
 
 
-        const areasValidas = ['CES', 'CIDI', 'TI+D', 'ACADEMICO', 'PSICOSOCIAL', 'ADMINISTRACION', 'CEO', 'GFDO', 'HILTON', 'PROYECTO', 'CONTABILIDAD', 'SIN ASIGNAR']; // Añadido 'SIN ASIGNAR' para validación
+        const areasValidas = ['CES', 'CIDI', 'TI+D', 'ACADEMICO', 'PSICOSOCIAL', 'ADMINISTRACION', 'CEO', 'GFDO', 'HILTON', 'PROYECTO', 'CONTABILIDAD', 'SIN ASIGNAR']; 
         if (!areasValidas.includes(item.area.toUpperCase())) {
           throw new Error(`Fila ${i + 1}: Área inválida "${item.area}"`);
         }
@@ -994,12 +1068,11 @@
           throw new Error(`Fila ${i + 1}: Estado físico inválido "${item.estadoFisico}"`);
         }
 
-        const estadosValidos = ['Activo', 'Inactivo', 'Sin Asignar']; // Añadido 'Sin Asignar' para validación
+        const estadosValidos = ['Activo', 'Inactivo', 'Sin Asignar']; 
         if (!estadosValidos.includes(item.estado)) {
           throw new Error(`Fila ${i + 1}: Estado inválido "${item.estado}"`);
         }
 
-        // Verificar si el código ya existe en el inventario actual o en los nuevos a importar
         const existingItem = inventario.find(existing => existing.codigo.toLowerCase() === item.codigo.toLowerCase());
         const newItem = newInventario.find(newlyAdded => newlyAdded.codigo.toLowerCase() === item.codigo.toLowerCase());
 
@@ -1010,13 +1083,10 @@
         newInventario.push(item);
       }
 
-      // Actualizar Firestore con los datos importados
-      // Para simplicidad: Eliminar todos y volver a agregar (opcional para manejo real)
       const docsSnapshot = await getDocs(collection(db, 'inventario'));
       const batchPromises = docsSnapshot.docs.map(docSnap => deleteDoc(doc(db, 'inventario', docSnap.id)));
       await Promise.all(batchPromises);
 
-      // Agregar nuevos documentos
       for await (const activo of newInventario) {
         await addDoc(collection(db, 'inventario'), activo);
       }
@@ -1033,4 +1103,5 @@
 
 </body>
 </html>
+
 
