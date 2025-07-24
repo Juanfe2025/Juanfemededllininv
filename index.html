@@ -546,19 +546,31 @@
   const form = document.getElementById('assetForm');
   const tbody = document.getElementById('inventoryTableBody');
   const fechaBajaInput = document.getElementById('fechaBaja');
+  const fechaAsignacionInput = document.getElementById('fechaAsignacion'); // Añadido
   const estadoSelect = document.getElementById('estado');
   const btnExportExcel = document.getElementById('btnExportExcel');
   const searchInput = document.getElementById('searchInput');
 
-  // Habilitar o deshabilitar fecha de baja según estado
+  // Habilitar o deshabilitar fecha de baja y fecha de asignación según estado
   estadoSelect.addEventListener('change', () => {
     if (estadoSelect.value === 'Inactivo') {
       fechaBajaInput.disabled = false;
       fechaBajaInput.required = true;
-    } else {
+      fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado
+      fechaAsignacionInput.required = true;
+    } else if (estadoSelect.value === 'Sin Asignar') { // Nueva condición para "Sin Asignar"
+      fechaBajaInput.disabled = true;
+      fechaBajaInput.required = false;
+      fechaBajaInput.value = ''; // Limpiar el valor
+      fechaAsignacionInput.disabled = true;
+      fechaAsignacionInput.required = false;
+      fechaAsignacionInput.value = ''; // Limpiar el valor
+    } else { // Para "Activo" o cualquier otro estado
       fechaBajaInput.disabled = true;
       fechaBajaInput.required = false;
       fechaBajaInput.value = '';
+      fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado
+      fechaAsignacionInput.required = true;
     }
   });
 
@@ -678,15 +690,28 @@
       form.discoDuro.value = data.discoDuro || '';
       form.contrasena.value = data.contrasena || '';
 
+      // Lógica para habilitar/deshabilitar campos de fecha al cargar para editar
       if (data.estado === 'Inactivo') {
         fechaBajaInput.disabled = false;
         fechaBajaInput.required = true;
         fechaBajaInput.value = data.fechaBaja || '';
-      } else {
+        fechaAsignacionInput.disabled = false;
+        fechaAsignacionInput.required = true;
+      } else if (data.estado === 'Sin Asignar') {
         fechaBajaInput.disabled = true;
         fechaBajaInput.required = false;
         fechaBajaInput.value = '';
+        fechaAsignacionInput.disabled = true;
+        fechaAsignacionInput.required = false;
+        fechaAsignacionInput.value = '';
+      } else { // Activo
+        fechaBajaInput.disabled = true;
+        fechaBajaInput.required = false;
+        fechaBajaInput.value = '';
+        fechaAsignacionInput.disabled = false;
+        fechaAsignacionInput.required = true;
       }
+
       form.setAttribute('data-edit-id', id);
       form.querySelector('button[type="submit"]').textContent = 'Actualizar Activo';
     } else {
@@ -730,6 +755,8 @@
     form.reset();
     fechaBajaInput.disabled = true;
     fechaBajaInput.required = false;
+    fechaAsignacionInput.disabled = false; // Asegurarse de que esté habilitado por defecto
+    fechaAsignacionInput.required = true; // Asegurarse de que sea requerido por defecto
     form.removeAttribute('data-edit-id');
     form.querySelector('button[type="submit"]').textContent = 'Guardar Activo';
   }
@@ -746,8 +773,12 @@
     const ciudad = form.ciudad.value;
     const estadoFisico = form.estadoFisico.value;
     const estado = form.estado.value;
-    const fechaAsignacion = form.fechaAsignacion.value;
-    const fechaBaja = estado === 'Inactivo' ? form.fechaBaja.value : '';
+    
+    // Solo obtener fechaAsignacion si no está deshabilitado
+    const fechaAsignacion = fechaAsignacionInput.disabled ? '' : form.fechaAsignacion.value;
+    // Solo obtener fechaBaja si no está deshabilitado
+    const fechaBaja = fechaBajaInput.disabled ? '' : form.fechaBaja.value;
+
 
     const proveedor = form.proveedor.value.trim();
     const marca = form.marca.value.trim();
@@ -759,10 +790,22 @@
     const contrasena = form.contrasena.value.trim();
 
 
-    if (!nombreUsuario || !tipo || !codigo || !area || !ciudad || !estadoFisico || !estado || !fechaAsignacion) {
-      alert('Por favor, complete todos los campos obligatorios: Nombre de Usuario, Tipo de Activo, Código, Área de Impacto, Ciudad, Estado Físico, Estado, Fecha de Asignación.');
+    // Validar campos obligatorios, ajustando para "Sin Asignar"
+    if (!nombreUsuario || !tipo || !codigo || !area || !ciudad || !estadoFisico || !estado) {
+      alert('Por favor, complete todos los campos obligatorios: Nombre de Usuario, Tipo de Activo, Código, Área de Impacto, Ciudad, Estado Físico, Estado.');
       return;
     }
+    // Validar fechaAsignacion solo si no está deshabilitada
+    if (!fechaAsignacionInput.disabled && !fechaAsignacion) {
+        alert('Por favor, ingrese la Fecha de Asignación.');
+        return;
+    }
+    // Validar fechaBaja solo si no está deshabilitada
+    if (!fechaBajaInput.disabled && !fechaBaja) {
+        alert('Por favor, ingrese la Fecha de Baja.');
+        return;
+    }
+
 
     const nuevoActivo = { 
       nombreUsuario, 
@@ -922,11 +965,21 @@
           contrasena: row[headers.indexOf('contrasena')] || ''
         };
 
-        if (!item.nombreUsuario || !item.tipo || !item.codigo || !item.area || !item.ciudad || !item.estadoFisico || !item.estado || !item.fechaAsignacion) {
-          throw new Error(`Fila ${i + 1}: Faltan datos requeridos (nombreUsuario, tipo, codigo, area, ciudad, estadoFisico, estado, fechaAsignacion).`);
+        if (!item.nombreUsuario || !item.tipo || !item.codigo || !item.area || !item.ciudad || !item.estadoFisico || !item.estado) {
+          throw new Error(`Fila ${i + 1}: Faltan datos requeridos (nombreUsuario, tipo, codigo, area, ciudad, estadoFisico, estado).`);
+        }
+        // Validar fechas solo si el estado no es "Sin Asignar"
+        if (item.estado !== 'Sin Asignar') {
+            if (!item.fechaAsignacion) {
+                throw new Error(`Fila ${i + 1}: Fecha de Asignación es requerida para el estado "${item.estado}".`);
+            }
+            if (item.estado === 'Inactivo' && !item.fechaBaja) {
+                throw new Error(`Fila ${i + 1}: Fecha de Baja es requerida para el estado "Inactivo".`);
+            }
         }
 
-        const areasValidas = ['CES', 'CIDI', 'TI+D', 'ACADEMICO', 'PSICOSOCIAL', 'ADMINISTRACION', 'CEO', 'GFDO', 'HILTON', 'PROYECTO', 'CONTABILIDAD', 'OTRO'];
+
+        const areasValidas = ['CES', 'CIDI', 'TI+D', 'ACADEMICO', 'PSICOSOCIAL', 'ADMINISTRACION', 'CEO', 'GFDO', 'HILTON', 'PROYECTO', 'CONTABILIDAD', 'SIN ASIGNAR']; // Añadido 'SIN ASIGNAR' para validación
         if (!areasValidas.includes(item.area.toUpperCase())) {
           throw new Error(`Fila ${i + 1}: Área inválida "${item.area}"`);
         }
@@ -941,7 +994,8 @@
           throw new Error(`Fila ${i + 1}: Estado físico inválido "${item.estadoFisico}"`);
         }
 
-        if (!['Activo', 'Inactivo'].includes(item.estado)) {
+        const estadosValidos = ['Activo', 'Inactivo', 'Sin Asignar']; // Añadido 'Sin Asignar' para validación
+        if (!estadosValidos.includes(item.estado)) {
           throw new Error(`Fila ${i + 1}: Estado inválido "${item.estado}"`);
         }
 
@@ -979,3 +1033,4 @@
 
 </body>
 </html>
+
